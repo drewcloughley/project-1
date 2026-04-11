@@ -42,6 +42,31 @@ The data has been cleaned mostly by renaming variables to be more understandable
 
 -   Do economic conditions (e.g., GDP per capita, inflation) predict transitions from democracy to dictatorship?
 
+
+## Unmodified Data summary 1
+
+```{r}
+democracy_data_2020 <- democracy_data |>
+  filter(year == 2020)
+
+
+democracy_data_2020 |> 
+  filter(is_colony == TRUE) |> 
+  count(regime_category_index, regime_category)
+```
+
+
+
+
+
+
+## Unmodified Data summary 2
+
+
+
+
+
+
 ## Assigning Continent names to each country and filtering out non-countries
 
 ```{r}

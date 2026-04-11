@@ -133,25 +133,25 @@ democracy_clean <-
 ```{r}
 democracy_clean |>
   # Remove rows where regime_category is missing
-  tidyr::drop_na(electoral_category) |>
+  drop_na(electoral_category) |>
   # Count the number of countries per regime category per year
-  dplyr::count(year, electoral_category) |>
+  count(year, electoral_category) |>
   # Plot the results
-  ggplot2::ggplot(
-    ggplot2::aes(
+  ggplot(
+    aes(
       x = year,
       y = n,
       colour = electoral_category
     )
   ) +
-  ggplot2::geom_line(linewidth = 1) +
-  ggplot2::labs(
+  geom_line(linewidth = 1) +
+  labs(
     title = "Popularity of Electoral Categories Over Time",
     x = "Year",
     y = "Number of Countries",
     colour = "Electoral Category"
   ) +
-  ggplot2::theme_minimal()
+  theme_minimal()
 ```
 
 ```{r}
