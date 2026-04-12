@@ -44,7 +44,7 @@ The data has been cleaned mostly by renaming variables to be more understandable
 -   Do economic conditions (e.g., GDP per capita, inflation) predict transitions from democracy to dictatorship?
 
 
-## Unmodified Data summary 1
+## 2020 Countries by Regime Category
 
 ```{r}
 democracy_data_2020 <- democracy_data |>
@@ -61,7 +61,7 @@ democracy_data_2020 |>
 
 
 
-## Unmodified Data summary 2
+## 2020 Countries Communism vs Monarchy vs Democracy
 
 
 
