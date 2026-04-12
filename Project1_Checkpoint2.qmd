@@ -10,6 +10,7 @@ format: html
 #| warning: false
 library(tidyverse)
 library(kableExtra)
+library(knitr)
 
 democracy_data <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-11-05/democracy_data.csv')
 
@@ -43,29 +44,106 @@ The data has been cleaned mostly by renaming variables to be more understandable
 
 -   Do economic conditions (e.g., GDP per capita, inflation) predict transitions from democracy to dictatorship?
 
-
-## 2020 Countries by Regime Category
+## Countries (Including Colonies) by Regime Category in 2020
 
 ```{r}
-democracy_data_2020 <- democracy_data |>
-  filter(year == 2020)
+#| results: 'asis'
 
+count_regime_categories <- function(yr) {
+  
+  # Filter by the chosen year
+  regime_data <- democracy_data |> 
+    filter(year == yr, 
+           !is.na(regime_category
+                  )
+           )|> 
+    group_by(regime_category) |> 
+    summarize(number_of_countries = n(), 
+              .groups = "drop"
+              ) |> 
+  select(regime_category, number_of_countries)
 
-democracy_data_2020 |> 
-  filter(is_colony == TRUE) |> 
-  count(regime_category_index, regime_category)
+  regime_data |>
+    kable() |> 
+    kable_styling() |>
+    print()
+  
+  # Create a bar plot
+  ggplot(regime_data, 
+         aes(x = regime_category, 
+             y = number_of_countries, 
+             fill = regime_category
+             )
+         ) +
+  geom_col() +
+  labs(
+    title = paste("Popularity by Regime in", yr),
+    x = "Regime Category",
+    y = "Number of Countries",
+    fill = "Regime Category"
+    ) + 
+    theme_minimal()
+  
+}
+count_regime_categories(2020)
+  
 ```
-
-
-
-
-
 
 ## 2020 Countries Communism vs Monarchy vs Democracy
 
+```{r}
+#| results: 'asis'
 
+count_political_ideologies <- function(selected_year) {
+  
+  # Filter by the selected year
+  filtered_data <- democracy_data |> filter(year == selected_year)
+  
+  # Iterate over the ideology columns to count TRUE values
+  ideology_cols <- c("is_communist", "is_democracy", "is_monarchy")
+  ideology_cols
+  
+  counts <- map_int(ideology_cols, 
+                    ~ sum(filtered_data[[.x]], 
+                          na.rm = TRUE
+                          )
+                    )
+  
+  # Create a summary 
+  summary_data <- tibble(
+    political_ideology = c("Communist", "Democracy", "Monarchy"),
+    number_of_countries = counts,
+    year = selected_year
+  ) |>
+    group_by(political_ideology) |>
+    summarize(number_of_countries = number_of_countries) 
+  
+  summary_data |> 
+    kable() |> 
+    kable_styling() |> 
+    print()
+  
+  # Create a bar plot
+  ggplot(summary_data, 
+         aes(x = political_ideology, 
+             y = number_of_countries, 
+             fill = political_ideology
+             )
+         ) +
+  geom_col() +
+  labs(
+    title = paste("Popularity of Communism, Democracies, and Monarchies in", selected_year),
+    x = "Political Ideology",
+    y = "Number of Countries",
+    fill = "Political Ideology"
+    ) + 
+    theme_minimal()
 
+}
 
+count_political_ideologies(2020)
+
+```
 
 
 ## Assigning Continent names to each country and filtering out non-countries
@@ -139,7 +217,8 @@ communist_summary <- communist_countries |>
   select(continent, total_communist_countries)
 
 communist_summary |> 
-  kable()
+  kable() |>
+  kable_styling()
 
 ggplot(communist_summary, aes(x = continent, y = total_communist_countries, fill = continent)) + 
   geom_col() +
@@ -171,7 +250,9 @@ pct_table <- democracy_data |>
   distinct(continent) |>
   mutate(pct_communist = percents)
 
-pct_table
+pct_table |>
+  kable() |>
+  kable_styling()
 
 ggplot(pct_table, aes(x = continent, y = pct_communist, fill = continent)) +
   geom_col() +
