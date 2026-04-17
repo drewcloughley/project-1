@@ -194,26 +194,34 @@ Attaching package: 'rvest'</code></pre>
 </div>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>populations <span class="ot">&lt;-</span> <span class="fu">read_html</span>(<span class="st">"https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population"</span>)</span>
 <span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>pop_table <span class="ot">&lt;-</span> populations <span class="sc">|&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>pop_data <span class="ot">&lt;-</span> populations <span class="sc">|&gt;</span></span>
 <span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">html_element</span>(<span class="st">"table.wikitable"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">html_table</span>(<span class="at">fill =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>pop_table</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">html_table</span>(<span class="at">fill =</span> <span class="cn">TRUE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Country =</span> <span class="dv">1</span>, </span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">Population =</span> <span class="dv">2</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">|&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">Country    =</span> <span class="fu">trimws</span>(Country),</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">Population =</span> <span class="fu">as.numeric</span>(<span class="fu">gsub</span>(<span class="st">"[^0-9]"</span>, <span class="st">""</span>, Population))  <span class="co"># strip anything that isn't a digit</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(Population))</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>pop_data</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 <div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 240 × 6
-   Location      Population    `% ofworld` Date     Source (official or …¹ Notes
-   &lt;chr&gt;         &lt;chr&gt;         &lt;chr&gt;       &lt;chr&gt;    &lt;chr&gt;                  &lt;chr&gt;
- 1 World         8,232,000,000 100%        13 Jun … UN projection[1][3]    ""   
- 2 India         1,417,492,000 17.2%       1 Jul 2… Official projection[4] "[b]"
- 3 China         1,404,890,000 17.0%       31 Dec … Official estimate[5]   "[c]"
- 4 United States 341,784,857   4.1%        1 Jul 2… Official estimate[6]   "[d]"
- 5 Indonesia     288,315,089   3.5%        31 Dec … National annual proje… ""   
- 6 Pakistan      241,499,431   2.9%        1 Mar 2… 2023 census result[8]  "[e]"
- 7 Nigeria       223,800,000   2.7%        1 Jul 2… Official projection[9] ""   
- 8 Brazil        213,421,037   2.6%        1 Jul 2… Official estimate[10]  ""   
- 9 Bangladesh    169,828,911   2.1%        14 Jun … 2022 census result[11] "[f]"
-10 Russia        146,028,325   1.8%        1 Jan 2… Official estimate[13]  "[g]"
-# ℹ 230 more rows
-# ℹ abbreviated name: ¹​`Source (official or fromthe United Nations)`</code></pre>
+<pre><code># A tibble: 240 × 2
+   Country       Population
+   &lt;chr&gt;              &lt;dbl&gt;
+ 1 World         8232000000
+ 2 India         1417492000
+ 3 China         1404890000
+ 4 United States  341784857
+ 5 Indonesia      288315089
+ 6 Pakistan       241499431
+ 7 Nigeria        223800000
+ 8 Brazil         213421037
+ 9 Bangladesh     169828911
+10 Russia         146028325
+# ℹ 230 more rows</code></pre>
 </div>
 </div>
 <div class="cell">

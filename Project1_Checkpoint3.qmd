@@ -103,11 +103,19 @@ library(rvest)
 
 populations <- read_html("https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population")
 
-pop_table <- populations |>
+pop_data <- populations |>
   html_element("table.wikitable") |>
-  html_table(fill = TRUE)
-pop_table
-
+  html_table(fill = TRUE) |>
+  select(
+    Country = 1, 
+    Population = 2
+    ) |>
+  mutate(
+    Country    = trimws(Country),
+    Population = as.numeric(gsub("[^0-9]", "", Population))  # strip anything that isn't a digit
+  ) %>%
+  filter(!is.na(Population))
+pop_data
 
 ```
 
