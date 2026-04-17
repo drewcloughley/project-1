@@ -1,0 +1,135 @@
+---
+title: "Project 1 Checkpoint 3"
+authors: 
+  - name: "Ian Cay"
+  - name: "Drew Cloughley"
+  - name: "Nico Ragasa"
+format: html
+editor: visual
+---
+
+## Data Set Up
+
+```{r}
+#| warning: false
+library(tidyverse)
+library(kableExtra)
+library(knitr)
+library(httr)
+library(jsonlite)
+library(tidyjson)
+library(glue)
+library(gt)
+
+democracy_data <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-11-05/democracy_data.csv')
+```
+## Assigning Continent names to each country and filtering out non-countries
+
+```{r}
+#| results: 'asis'
+
+democracy_data <- democracy_data |> 
+  mutate(
+    continent = case_when(
+      
+      country_code %in% c(
+        "DZA","AGO","BEN","BWA","BFA","BDI","CMR","CPV","CAF","TCD","COM","COG","COD",
+        "CIV","DJI","EGY","GNQ","ERI","SWZ","ETH","GAB","GMB","GHA","GIN","GNB","KEN",
+        "LSO","LBR","LBY","MDG","MWI","MLI","MRT","MUS","MAR","MOZ","NAM","NER","NGA",
+        "RWA","STP","SEN","SYC","SLE","SOM","ZAF","SSD","SDN","TZA","TGO","TUN","UGA",
+        "ZMB","ZWE","ZAR"
+      ) ~ "Africa",
+
+      # North America (incl. Caribbean)
+      country_code %in% c(
+        "CAN","USA","MEX","BHS","BRB","CUB","DMA","DOM","GRD","HTI","JAM",
+        "KNA","LCA","VCT","TTO","ATG"
+      ) ~ "North America",
+
+      # Central America
+      country_code %in% c(
+        "BLZ","CRI","SLV","GTM","HND","NIC","PAN"
+      ) ~ "Central America",
+
+      # South America
+      country_code %in% c(
+        "ARG","BOL","BRA","CHL","COL","ECU","GUY","PRY","PER","SUR","URY","VEN"
+      ) ~ "South America",
+
+      country_code %in% c(
+        "AFG","ARM","AZE","BHR","BGD","BTN","BRN","KHM","CHN","CYP","GEO","IND","IDN",
+        "IRN","IRQ","ISR","JPN","JOR","KAZ","KWT","KGZ","LAO","LBN","MYS","MDV","MNG",
+        "MMR","NPL","PRK","OMN","PAK","PSE","PHL","QAT","SAU","SGP","KOR","LKA","SYR",
+        "TWN","TJK","THA","TLS","TUR","TKM","ARE","UZB","VNM","YEM"
+      ) ~ "Asia",
+
+      country_code %in% c(
+        "ALB","AND","AUT","BLR","BEL","BIH","BGR","HRV","CYP","CZE","DNK","EST","FIN",
+        "FRA","DEU","GRC","HUN","ISL","IRL","ITA","LVA","LIE","LTU","LUX","MLT","MDA",
+        "MCO","MNE","NLD","MKD","NOR","POL","PRT","ROU","RUS","SMR","SRB","SVK","SVN",
+        "ESP","SWE","CHE","UKR","GBR","VAT","GER","ROM"
+      ) ~ "Europe",
+
+      country_code %in% c(
+        "AUS","FJI","KIR","MHL","FSM","NRU","NZL","PLW","PNG","WSM","SLB","TON","TUV",
+        "VUT","NUR"
+      ) ~ "Oceania",
+
+      TRUE ~ NA_character_
+    )
+  ) |> 
+  filter(!is.na(continent))
+```
+
+
+## API
+
+```{r}
+#| label: country-api
+
+
+
+
+
+
+```
+
+## Data Scraping
+
+```{r}
+#| label: population-table
+
+library(rvest)
+
+populations <- read_html("https://en.wikipedia.org/wiki/List_of_countries_and_dependencies_by_population")
+
+pop_table <- populations |>
+  html_element("table.wikitable") |>
+  html_table(fill = TRUE)
+pop_table
+
+
+```
+
+```{r}
+#| label: get-info-from-page
+
+get_info_from_page <- function(page, css_selector, node, extract = "text") {
+  
+  # Grab the CSS and node elements from the page
+  elements <- page %>%
+    html_elements(css_selector) %>%
+    html_element(node)
+  
+  
+  if (extract == "text") {
+    # Extract the text from the element and trim it
+    html_text(elements, trim = TRUE)
+  } else {
+    # Extract what is specified
+    html_attr(elements, extract)
+  }
+}
+
+```
+
