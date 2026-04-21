@@ -270,5 +270,3 @@ country_meta_data <- country_data |>
 
 country_meta_data
 ```
-
-> > > > > > > 26985ff65e91667ecb8cedd3bb1041714ca8cd3b
