@@ -24,6 +24,7 @@ library(countrycode)
 
 democracy_data <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/main/data/2024/2024-11-05/democracy_data.csv')
 ```
+
 ## Assigning Continent names to each country and filtering out non-countries
 
 ```{r}
@@ -82,16 +83,13 @@ democracy_data <- democracy_data |>
   filter(!is.na(continent))
 ```
 
-
-
 ## Research Questions
 
-- Are certain political ideologies more popular among higher/lower GDP countries?
+-   Are certain political ideologies more popular among higher/lower GDP countries?
 
-- What is the association between the regime category and population of a country?
+-   What is the association between the regime category and population of a country?
 
-- Do higher/lower population countries prefer certain political ideologies?
-
+-   Do higher/lower population countries prefer certain political ideologies?
 
 ## API
 
@@ -105,11 +103,6 @@ democracy_data <- democracy_data |>
 
 ```
 
-
-
-
-
-
 two new country-level data sources
 
 Stat 431: One of these must be acquired using APIs or webscraping
@@ -121,8 +114,6 @@ descriptions of each of the new datasets
 a “meta” dataset containing all the acquired data (joined together)
 
 at least two data summaries OR visualizations incorporating the additional country-level data
-
-
 
 ## Data Scraping
 
@@ -201,8 +192,6 @@ plot_pop_by_category(is_monarchy)
 
 ```
 
-
-
 ```{r}
 
 summarize_pop_by_category <- function(cat_var) {
@@ -226,13 +215,3 @@ summarize_pop_by_category(is_democracy)
 summarize_pop_by_category(is_monarchy)
 
 ```
-
-
-
-
-
-
-
-
-
-
