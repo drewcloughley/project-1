@@ -306,22 +306,43 @@ pop_assumption_test(is_democracy)
 pop_assumption_test(is_monarchy)
 
 ```
+For the regression model between Regime Category and log(Population), the equal variance assumption was violated, but all of the other FINE assumptions were met.
+
+For the regression model between Communist Status and log(Population), the normality assumption was violated, but all of the other FINE assumptions were met.
+
+For the regression model between Democracy Status and log(Population), the normality assumption and the equal variance assumption was violated, but all of the other FINE assumptions were met.
+
+For the regression model between Monarchy Status and log(Population), the normality assumption was violated, but all of the other FINE assumptions were met.
+
 
 ```{r}
 
-# Welch's ANOVA
+# Welch's ANOVA between regime_category and log(Population)
 oneway.test(log(Population) ~ regime_category, data = country_data, var.equal = FALSE)
 
-# Mann-Whitney test
+
+# Mann-Whitney test between regime_category and log(Population)
 wilcox.test(log(Population) ~ is_communist, data = country_data)
 
-# Welch's t-test 
+
+# Welch's t-test between is_democracy and log(Population)
 t.test(log(Population) ~ is_democracy, data = country_data, var.equal = FALSE)
 
-# Mann-Whitney test
+
+# Mann-Whitney test between is_monarchy and log(Population)
 wilcox.test(log(Population) ~ is_monarchy, data = country_data)
 
 ```
+
+According to the Welch's ANOVA (F = 6.9947; df = 5, 57.656, p-value = 0.000036), at an $\alpha = 0.05$ significance level, we have extremely strong evidence that there is an association between the geometric mean population and the regime categories of countries.
+
+According to the Mann-Whitney test (W = 399; p-value = 0.08853), at an $\alpha = 0.05$ significance level, we have some evidence that there is an association between the geometric mean population and the communist status of countries.
+
+According to the Welch's two-sample t-test (t = 4.2001; df = 188.89; p-value = 0.000041), at an $\alpha = 0.05$ significance level, we have extremely strong evidence that there is an association between the geometric mean population and the democracy status of countries.
+
+According to the Mann-Whitney test (W = 3834; p-value = 0.008874), at an $\alpha = 0.05$ significance level, we have very strong evidence that there is an association between the geometric mean population and the monarchy status of countries.
+
+
 
 # Create Countries Meta Dataset for 2020
 
@@ -499,18 +520,41 @@ gdp_assumption_test(is_monarchy)
 
 ```
 
+For the regression model between Regime Category and log(GDP), the equal variance assumption was violated, but all of the other FINE assumptions were met.
+
+For the regression model between Communist Status and log(GDP), all of the FINE assumptions were met.
+
+For the regression model between Democracy Status and log(GDP), the equal variance assumption was violated, but all of the other FINE assumptions were met.
+
+For the regression model between Monarchy Status and log(GDP), all of the FINE assumptions were met.
+
+
+
 ```{r}
 
 # Welch's ANOVA
 oneway.test(log(GDP) ~ regime_category, data = country_meta_data, var.equal = FALSE)
 
+
 # Student's t-test
 t.test(log(GDP) ~ is_communist, data = country_meta_data, var.equal = TRUE)
 
+
 # Welch's t-test 
 t.test(log(GDP) ~ is_democracy, data = country_meta_data, var.equal = FALSE)
+
 
 # Student's t-test
 t.test(log(GDP) ~ is_monarchy, data = country_meta_data, var.equal = TRUE)
 
 ```
+
+According to the Welch's ANOVA (F = 1.2188; df = 5.00, 55.27; p-value = 0.31266), at an $\alpha = 0.05$ significance level, we do not have enough evidence that there is an association between the geometric mean GDP and the regime categories of countries.
+
+According to the Student's two-sample t-test (t = -1.551; df = 185; p-value = 0.1226), at an $\alpha = 0.05$ significance level, we do not have enough evidence that there is an association between the geometric mean GDP and the communist status of countries.
+
+According to the Welch's two-sample t-test (t = 0.095288; df = 184.58; p-value = 0.9242), at an $\alpha = 0.05$ significance level, we do not have enough evidence that there is an association between the geometric mean GDP and the democracy status of countries.
+
+According to the Student's two-sample t-test (t = -0.792; df = 185; p-value = 0.4294), at an $\alpha = 0.05$ significance level, we do not have enough evidence that there is an association between the geometric mean GDP and the monarchy status of countries.
+
+
