@@ -20,11 +20,11 @@ execute:
 library(tidyverse)
 library(ggplot2)
 library(ggridges)
+library(lmtest)
 library(knitr)
 library(httr)
 library(jsonlite)
 library(tidyjson)
-library(glue)
 library(gt)
 library(countrycode)
 
@@ -99,9 +99,6 @@ code options - be smart about output
 
 -   Do higher/lower population countries prefer certain political ideologies?
 
-## To-Do
-
-two professionally formatted visualizations every visualization must have alternative (alt) text, non-default colors, a non-default theme, and clear labels at least one visualization must use a more complex geometry (e.g., geom_segment(), geom_density_ridge() geom_ribbon(), geom_tile(), geom_hex()) fits one statistical model addressing one of the research questions posed professionally formats the output of that model to communicate the results Formatted values (e.g., decimals, percentages, currencies) Boldface headers Captions
 
 ## Web Scraping - Population
 
@@ -156,7 +153,7 @@ country_data
 
 ```
 
-# Box-plots for the Relationship Between Categorical Variables and Population
+# Ridgeline Plots for the Relationship Between Categorical Variables and Population
 
 ```{r}
 
@@ -272,10 +269,12 @@ summarize_pop_by_category <- function(cat_var) {
     data_color(method = "numeric",
                palette = "Blues"
     ) |>
-    tab_header(title = paste("Table of Population Statistics by", var_name2),
+    tab_header(title = paste("Table of Population Statistics by", var_name2)
     ) |>
     tab_style(style = cell_text(weight = "bold"),
-              locations = cells_column_labels()
+              locations = list(cells_title(groups = "title"), 
+                               cells_title(groups = "subtitle"), 
+                               cells_column_labels())
     ) |>
     tab_footnote(md("*Note 1*: Standard error was calculated as the standard deviation divided by the square root of the sample size.")) |>
     tab_footnote(md("*Note 2*: Darker blues represent greater values."))
@@ -287,6 +286,50 @@ summarize_pop_by_category(is_democracy)
 summarize_pop_by_category(is_monarchy)
 
 ```
+
+# Statistical Tests for Models between Categorical Variables and Population
+
+```{r}
+# Testing assumptions for model between log(Population) and categorical variables 
+pop_assumption_test <- function(cat_var) { 
+  
+  var_name <- deparse(substitute(cat_var))
+  model <- lm(reformulate(var_name, response = "log(Population)"), data = country_data)
+  
+  par(mfrow = c(2, 2))  # View all 4 diagnostic plots at once 
+  plot(model) 
+  
+  print(shapiro.test(residuals(model)))   # testing normality assumption 
+  print(bptest(model))                    # testing equal variance assumption
+  
+  }
+
+pop_assumption_test(regime_category)
+pop_assumption_test(is_communist)
+pop_assumption_test(is_democracy)
+pop_assumption_test(is_monarchy)
+
+```
+
+
+
+```{r}
+
+# Welch's ANOVA
+oneway.test(log(Population) ~ regime_category, data = country_data, var.equal = FALSE)
+
+# Mann-Whitney test
+wilcox.test(log(Population) ~ is_communist, data = country_data)
+
+# Welch's t-test 
+t.test(log(Population) ~ is_democracy, data = country_data, var.equal = FALSE)
+
+# Mann-Whitney test
+wilcox.test(log(Population) ~ is_monarchy, data = country_data)
+
+```
+
+
 
 
 # Create Countries Meta Dataset for 2020
@@ -306,7 +349,7 @@ country_meta_data <- country_data |>
 country_meta_data
 ```
 
-# Box-plots for the Relationship Between Categorical Variables and GDP in USD (in Billions)
+# Ridgeline Plots for the Relationship Between Categorical Variables and GDP in USD (in Billions)
 
 ```{r}
 plot_gdp_by_category <- function(cat_var) {
@@ -330,7 +373,7 @@ plot_gdp_by_category <- function(cat_var) {
       var_name == "is_monarchy" & {{ cat_var }} == FALSE ~ "Non-Monarchy",
       .default = as.character({{ cat_var }})
     )) |> 
-    ggplot(aes(y = {{ cat_var }}, x = Population, fill = {{ cat_var }})) + 
+    ggplot(aes(y = {{ cat_var }}, x = GDP, fill = {{ cat_var }})) + 
     geom_density_ridges(alpha = 0.5) + 
     scale_fill_viridis_d() + 
     scale_x_log10(labels = scales::comma) +
@@ -427,7 +470,9 @@ summarize_gdp_by_category <- function(cat_var) {
                subtitle = "(in USD in Billions)"
     ) |>
     tab_style(style = cell_text(weight = "bold"),
-              locations = cells_column_labels()
+              locations = list(cells_title(groups = "title"), 
+                               cells_title(groups = "subtitle"), 
+                               cells_column_labels())
     ) |>
     tab_footnote(md("*Note 1*: Standard error was calculated as the standard deviation divided by the square root of the sample size.")) |>
     tab_footnote(md("*Note 2*: Darker blues represent greater values."))}
@@ -438,3 +483,48 @@ summarize_gdp_by_category(is_democracy)
 summarize_gdp_by_category(is_monarchy)
 
 ```
+
+# Statistical Tests for Models between Categorical Variables and GDP
+
+```{r}
+# Testing assumptions for model between log(GDP) and categorical variables 
+gdp_assumption_test <- function(cat_var) { 
+  
+  var_name <- deparse(substitute(cat_var))
+  model <- lm(reformulate(var_name, response = "log(GDP)"), data = country_meta_data)
+  
+  par(mfrow = c(2, 2))  # View all 4 diagnostic plots at once 
+  plot(model) 
+  
+  print(shapiro.test(residuals(model)))   # testing normality assumption 
+  print(bptest(model))                    # testing equal variance assumption
+  
+  }
+
+gdp_assumption_test(regime_category)
+gdp_assumption_test(is_communist)
+gdp_assumption_test(is_democracy)
+gdp_assumption_test(is_monarchy)
+
+```
+
+```{r}
+
+# Welch's ANOVA
+oneway.test(log(GDP) ~ regime_category, data = country_meta_data, var.equal = FALSE)
+
+# Student's t-test
+t.test(log(GDP) ~ is_communist, data = country_meta_data, var.equal = TRUE)
+
+# Welch's t-test 
+t.test(log(GDP) ~ is_democracy, data = country_meta_data, var.equal = FALSE)
+
+# Student's t-test
+t.test(log(GDP) ~ is_monarchy, data = country_meta_data, var.equal = TRUE)
+
+```
+
+
+
+
+
