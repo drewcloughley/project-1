@@ -18,7 +18,8 @@ execute:
 ```{r}
 #| warning: false
 library(tidyverse)
-library(kableExtra)
+library(ggplot2)
+library(ggridges)
 library(knitr)
 library(httr)
 library(jsonlite)
@@ -160,18 +161,41 @@ country_data
 ```{r}
 
 plot_pop_by_category <- function(cat_var) {
+  
+  # Store variable names
+  var_name <- deparse(substitute(cat_var))
+  var_name2 <- recode(var_name,
+                      "regime_category" = "Regime Category",
+                      "is_communist" = "Communist Status",
+                      "is_democracy" = "Democracy Status",
+                      "is_monarchy" = "Monarchy Status",
+                      .default = var_name)
+  
   country_data |>
-    filter(!is.na({{ cat_var }})) |>
-  ggplot(aes(y = {{ cat_var }}, x = Population, fill = {{ cat_var }})) +
-    geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-    geom_jitter(width = 0.2, size = 1.5, alpha = 0.7) +
-    scale_x_log10(labels = scales::comma) +
+    filter(!is.na({{ cat_var }})) |> 
+    mutate({{ cat_var }} := case_when(
+      var_name == "is_communist" & {{ cat_var }} == TRUE  ~ "Communist",
+      var_name == "is_communist" & {{ cat_var }} == FALSE ~ "Non-Communist",
+      var_name == "is_democracy" & {{ cat_var }} == TRUE  ~ "Democracy",
+      var_name == "is_democracy" & {{ cat_var }} == FALSE ~ "Non-Democracy",
+      var_name == "is_monarchy" & {{ cat_var }} == TRUE  ~ "Monarchy",
+      var_name == "is_monarchy" & {{ cat_var }} == FALSE ~ "Non-Monarchy",
+      .default = as.character({{ cat_var }})
+    )) |>
+    ggplot(aes(y = {{ cat_var }}, x = Population, fill = {{ cat_var }})) + 
+    geom_density_ridges(alpha = 0.5) + 
+    scale_x_log10(labels = scales::comma) + 
+    scale_fill_viridis_d() + 
     labs(
-      title = paste("Country Population by", deparse(substitute(cat_var))),
-      y     = deparse(substitute(cat_var)),
-      x     = "Population (log scale)"
+      x     = "Population (log scale)",
+      y     = "", 
+      title = paste("Country Population by", var_name2), 
+      subtitle = paste("Comparing the Populations of Countries by", var_name2)
     ) +
-    theme_minimal()
+    theme_bw() + 
+    theme(legend.position = "none", 
+          panel.grid.minor = element_blank(), 
+          text = element_text(family = "Helvetica", size = 12))
 }
 
 plot_pop_by_category(regime_category)
@@ -180,6 +204,7 @@ plot_pop_by_category(is_democracy)
 plot_pop_by_category(is_monarchy)
 
 ```
+
 
 # Summary Statistics for the Relationship Between Categorical Variables and Population
 
@@ -191,14 +216,23 @@ summarize_pop_by_category <- function(cat_var) {
   var_name <- deparse(substitute(cat_var))
   var_name2 <- recode(var_name,
                       "regime_category" = "Regime Category",
-                      "is_communist" = "Communist",
-                      "is_democracy" = "Democracy",
-                      "is_monarchy" = "Monarchy",
+                      "is_communist" = "Communist Status",
+                      "is_democracy" = "Democracy Status",
+                      "is_monarchy" = "Monarchy Status",
                       .default = var_name)
 
   country_data |>
     filter(!is.na({{ cat_var }})
     ) |>
+    mutate({{ cat_var }} := case_when(
+      var_name == "is_communist" & {{ cat_var }} == TRUE  ~ "Communist",
+      var_name == "is_communist" & {{ cat_var }} == FALSE ~ "Non-Communist",
+      var_name == "is_democracy" & {{ cat_var }} == TRUE  ~ "Democracy",
+      var_name == "is_democracy" & {{ cat_var }} == FALSE ~ "Non-Democracy",
+      var_name == "is_monarchy" & {{ cat_var }} == TRUE  ~ "Monarchy",
+      var_name == "is_monarchy" & {{ cat_var }} == FALSE ~ "Non-Monarchy",
+      .default = as.character({{ cat_var }})
+    )) |>
     group_by({{ cat_var }}) |>
     summarize(n = n(),
               mean_pop = mean(Population, na.rm = TRUE),
@@ -254,52 +288,6 @@ summarize_pop_by_category(is_monarchy)
 
 ```
 
-## API - GDP in USD
-
-```{r}
-#| label: country-api
-
-# Obtain 2020 GDP in USD for inputted country
-get_gdp_2020 <- function(country, key = my_key)
-  {
-  
-  # Store url to access API with country and key queries
-  url <- glue("https://api.api-ninjas.com/v1/gdp?year=2020;country={country};X-Api-Key={key}")
-  
-  # Temporarily store JSON data safely
-  my_data <- safely(fromJSON)(url)
-  
-  # Check if JSON was successfully obtained
-  if (is.null(my_data$result) |
-      length(my_data$result) == 0) {
-    return(NA)
-  } else {
-    return(my_data$result$gdp_nominal)
-  }
-}
-
-```
-
-```{r}
-#| echo: false
-my_key <- "Zk9p4D2UR8cKVCa1GKMhJgqnWRTzotRYLJOlagkr"
-```
-
-# Store Country GDPs in USD
-
-```{r}
-#| eval: false
-# We used a personal API key stored as "my_key"
-
-# Get GDP for all countries
-gdps <- map_dbl(.x = country_data$iso3c, .f = get_gdp)
-
-# Store GDP with country code as a tibble
-country_gdps <- tibble(iso3c = country_data$iso3c, GDP = gdps)
-
-# Save tibble as a csv
-write.csv(country_gdps, file = "country_gdps.csv")
-```
 
 # Create Countries Meta Dataset for 2020
 
@@ -312,7 +300,8 @@ gdp_data <- gdp_data |>
 # Combine GDP with aggregate 2020 data
 country_meta_data <- country_data |>
   inner_join(gdp_data, 
-             by = "iso3c")
+             by = "iso3c", 
+             relationship = "many-to-many")
 
 country_meta_data
 ```
@@ -321,18 +310,41 @@ country_meta_data
 
 ```{r}
 plot_gdp_by_category <- function(cat_var) {
+  # Store variable names
+  var_name <- deparse(substitute(cat_var))
+  var_name2 <- recode(var_name,
+                      "regime_category" = "Regime Category",
+                      "is_communist" = "Communist Status",
+                      "is_democracy" = "Democracy Status",
+                      "is_monarchy" = "Monarchy Status",
+                      .default = var_name)
+  
   country_meta_data |>
-    filter(!is.na({{ cat_var }})) |>
-  ggplot(aes(y = {{ cat_var }}, x = GDP, fill = {{ cat_var }})) +
-    geom_boxplot(outlier.shape = NA, alpha = 0.6) +
-    geom_jitter(width = 0.2, size = 1.5, alpha = 0.7) +
+    filter(!is.na({{ cat_var }})) |> 
+    mutate({{ cat_var }} := case_when(
+      var_name == "is_communist" & {{ cat_var }} == TRUE  ~ "Communist",
+      var_name == "is_communist" & {{ cat_var }} == FALSE ~ "Non-Communist",
+      var_name == "is_democracy" & {{ cat_var }} == TRUE  ~ "Democracy",
+      var_name == "is_democracy" & {{ cat_var }} == FALSE ~ "Non-Democracy",
+      var_name == "is_monarchy" & {{ cat_var }} == TRUE  ~ "Monarchy",
+      var_name == "is_monarchy" & {{ cat_var }} == FALSE ~ "Non-Monarchy",
+      .default = as.character({{ cat_var }})
+    )) |> 
+    ggplot(aes(y = {{ cat_var }}, x = Population, fill = {{ cat_var }})) + 
+    geom_density_ridges(alpha = 0.5) + 
+    scale_fill_viridis_d() + 
     scale_x_log10(labels = scales::comma) +
     labs(
-      title = paste("Country GDP in USD (in Billions) by", deparse(substitute(cat_var))),
-      y     = deparse(substitute(cat_var)),
-      x     = "GDP (log scale)"
+      x     = "GDP (log scale)",
+      y     = "", 
+      title = paste("Country GDP in USD (in Billions) by", var_name2), 
+      subtitle = paste("Comparing the GDP of Countries by", var_name2)
     ) +
-    theme_minimal()
+    theme_bw() + 
+    theme(legend.position = "none", 
+          panel.grid.minor = element_blank(), 
+          text = element_text(family = "Helvetica", size = 12))
+  
 }
 
 plot_gdp_by_category(regime_category)
@@ -352,14 +364,23 @@ summarize_gdp_by_category <- function(cat_var) {
   var_name <- deparse(substitute(cat_var))
   var_name2 <- recode(var_name,
                       "regime_category" = "Regime Category",
-                      "is_communist" = "Communist",
-                      "is_democracy" = "Democracy",
-                      "is_monarchy" = "Monarchy",
+                      "is_communist" = "Communist Status",
+                      "is_democracy" = "Democracy Status",
+                      "is_monarchy" = "Monarchy Status",
                       .default = var_name)
 
   country_meta_data |>
     filter(!is.na({{ cat_var }})
     ) |>
+    mutate({{ cat_var }} := case_when(
+      var_name == "is_communist" & {{ cat_var }} == TRUE  ~ "Communist",
+      var_name == "is_communist" & {{ cat_var }} == FALSE ~ "Non-Communist",
+      var_name == "is_democracy" & {{ cat_var }} == TRUE  ~ "Democracy",
+      var_name == "is_democracy" & {{ cat_var }} == FALSE ~ "Non-Democracy",
+      var_name == "is_monarchy" & {{ cat_var }} == TRUE  ~ "Monarchy",
+      var_name == "is_monarchy" & {{ cat_var }} == FALSE ~ "Non-Monarchy",
+      .default = as.character({{ cat_var }})
+    )) |>
     group_by({{ cat_var }}) |>
     summarize(n = n(),
               mean_GDP = mean(GDP, na.rm = TRUE),
