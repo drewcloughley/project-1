@@ -186,7 +186,6 @@ plot_pop_by_category(is_monarchy)
 
 # Summary Statistics for the Relationship Between Categorical Variables and Population
 
-
 ```{r}
 
 summarize_pop_by_category <- function(cat_var) {
