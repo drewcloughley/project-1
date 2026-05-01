@@ -217,6 +217,17 @@ country_meta_data <- country_data |>
              by = "iso3c", 
              relationship = "many-to-many")
 
+```
+
+### 8. Adding the gov_type variable:
+
+```{r}
+country_meta_data <- country_meta_data |>
+  mutate(gov_type = ifelse(is_communist == TRUE, "Communist",
+                           ifelse(is_democracy == TRUE, "Democracy",
+                                  ifelse(is_monarchy == TRUE, "Monarchy", "Other")))
+         )
+
 country_meta_data
 ```
 
@@ -230,22 +241,11 @@ plot_gdp_by_category <- function(cat_var) {
   var_name <- deparse(substitute(cat_var))
   var_name2 <- recode(var_name,
                       "regime_category" = "Regime Category",
-                      "is_communist" = "Communist Status",
-                      "is_democracy" = "Democracy Status",
-                      "is_monarchy" = "Monarchy Status",
+                      "gov_type" = "Government Type",
                       .default = var_name)
   
   country_meta_data |>
     filter(!is.na({{ cat_var }})) |> 
-    mutate({{ cat_var }} := case_when(
-      var_name == "is_communist" & {{ cat_var }} == TRUE  ~ "Communist",
-      var_name == "is_communist" & {{ cat_var }} == FALSE ~ "Non-Communist",
-      var_name == "is_democracy" & {{ cat_var }} == TRUE  ~ "Democracy",
-      var_name == "is_democracy" & {{ cat_var }} == FALSE ~ "Non-Democracy",
-      var_name == "is_monarchy" & {{ cat_var }} == TRUE  ~ "Monarchy",
-      var_name == "is_monarchy" & {{ cat_var }} == FALSE ~ "Non-Monarchy",
-      .default = as.character({{ cat_var }})
-    )) |> 
     ggplot(aes(y = {{ cat_var }}, x = GDP, fill = {{ cat_var }})) + 
     geom_density_ridges(alpha = 0.5) + 
     scale_fill_viridis_d() + 
@@ -274,23 +274,12 @@ summarize_gdp_by_category <- function(cat_var) {
   var_name <- deparse(substitute(cat_var))
   var_name2 <- recode(var_name,
                       "regime_category" = "Regime Category",
-                      "is_communist" = "Communist Status",
-                      "is_democracy" = "Democracy Status",
-                      "is_monarchy" = "Monarchy Status",
+                      "gov_type" = "Government Type",
                       .default = var_name)
 
   country_meta_data |>
     filter(!is.na({{ cat_var }})
     ) |>
-    mutate({{ cat_var }} := case_when(
-      var_name == "is_communist" & {{ cat_var }} == TRUE  ~ "Communist",
-      var_name == "is_communist" & {{ cat_var }} == FALSE ~ "Non-Communist",
-      var_name == "is_democracy" & {{ cat_var }} == TRUE  ~ "Democracy",
-      var_name == "is_democracy" & {{ cat_var }} == FALSE ~ "Non-Democracy",
-      var_name == "is_monarchy" & {{ cat_var }} == TRUE  ~ "Monarchy",
-      var_name == "is_monarchy" & {{ cat_var }} == FALSE ~ "Non-Monarchy",
-      .default = as.character({{ cat_var }})
-    )) |>
     group_by({{ cat_var }}) |>
     summarize(n = n(),
               mean_GDP = mean(GDP, na.rm = TRUE),
@@ -374,22 +363,11 @@ plot_pop_by_category <- function(cat_var) {
   var_name <- deparse(substitute(cat_var))
   var_name2 <- recode(var_name,
                       "regime_category" = "Regime Category",
-                      "is_communist" = "Communist Status",
-                      "is_democracy" = "Democracy Status",
-                      "is_monarchy" = "Monarchy Status",
+                      "gov_type" = "Government Type",
                       .default = var_name)
   
-  country_data |>
+  country_meta_data |>
     filter(!is.na({{ cat_var }})) |> 
-    mutate({{ cat_var }} := case_when(
-      var_name == "is_communist" & {{ cat_var }} == TRUE  ~ "Communist",
-      var_name == "is_communist" & {{ cat_var }} == FALSE ~ "Non-Communist",
-      var_name == "is_democracy" & {{ cat_var }} == TRUE  ~ "Democracy",
-      var_name == "is_democracy" & {{ cat_var }} == FALSE ~ "Non-Democracy",
-      var_name == "is_monarchy" & {{ cat_var }} == TRUE  ~ "Monarchy",
-      var_name == "is_monarchy" & {{ cat_var }} == FALSE ~ "Non-Monarchy",
-      .default = as.character({{ cat_var }})
-    )) |>
     ggplot(aes(y = {{ cat_var }}, x = Population, fill = {{ cat_var }})) + 
     geom_density_ridges(alpha = 0.5) + 
     scale_x_log10(labels = scales::comma) + 
@@ -418,23 +396,12 @@ summarize_pop_by_category <- function(cat_var) {
   var_name <- deparse(substitute(cat_var))
   var_name2 <- recode(var_name,
                       "regime_category" = "Regime Category",
-                      "is_communist" = "Communist Status",
-                      "is_democracy" = "Democracy Status",
-                      "is_monarchy" = "Monarchy Status",
+                      "gov_type" = "Government Type",
                       .default = var_name)
 
-  country_data |>
+  country_meta_data |>
     filter(!is.na({{ cat_var }})
     ) |>
-    mutate({{ cat_var }} := case_when(
-      var_name == "is_communist" & {{ cat_var }} == TRUE  ~ "Communist",
-      var_name == "is_communist" & {{ cat_var }} == FALSE ~ "Non-Communist",
-      var_name == "is_democracy" & {{ cat_var }} == TRUE  ~ "Democracy",
-      var_name == "is_democracy" & {{ cat_var }} == FALSE ~ "Non-Democracy",
-      var_name == "is_monarchy" & {{ cat_var }} == TRUE  ~ "Monarchy",
-      var_name == "is_monarchy" & {{ cat_var }} == FALSE ~ "Non-Monarchy",
-      .default = as.character({{ cat_var }})
-    )) |>
     group_by({{ cat_var }}) |>
     summarize(n = n(),
               mean_pop = mean(Population, na.rm = TRUE),
@@ -494,7 +461,7 @@ summarize_pop_by_category <- function(cat_var) {
 pop_assumption_test <- function(cat_var) { 
   
   var_name <- deparse(substitute(cat_var))
-  model <- lm(reformulate(var_name, response = "log(Population)"), data = country_data)
+  model <- lm(reformulate(var_name, response = "log(Population)"), data = country_meta_data)
   
   par(mfrow = c(2, 2))  # View all 4 diagnostic plots at once 
   plot(model) 
@@ -513,6 +480,7 @@ pop_assumption_test <- function(cat_var) {
 ## Ridgeline Plots for the Relationship Between Regime Category and GDP in USD (in Billions)
 
 ```{r}
+#| fig-alt: "Ridgeline plots showing distributions of log(GDP) for different regime categories. 'Royal Dictatorship' appears to be the right-most centered (greatest), with 'Military Dictatorship' being the left-most centered (least)"
 
 plot_gdp_by_category(regime_category)
 
@@ -521,12 +489,10 @@ plot_gdp_by_category(regime_category)
 ## Ridgeline Plots for the Relationship Between Communism, Democracy, and Monarchy Status and GDP in USD (in Billions)
 
 ```{r}
-#| layout-ncol: 3
-par(mfrow = c(1, 3))
-plot_gdp_by_category(is_communist)
-plot_gdp_by_category(is_democracy)
-plot_gdp_by_category(is_monarchy)
-par(mfrow = c(1, 1))
+#| fig-alt: ""
+
+plot_gdp_by_category(gov_type)
+
 ```
 
 ## Summary Statistics for the Relationship Between Regime Category and GDP in USD (in Billions)
@@ -537,23 +503,9 @@ summarize_gdp_by_category(regime_category)
 
 ## Summary Statistics for the Relationship Between Communism, Democracy, and Monarchy Status and GDP in USD (in Billions)
 
-::: {.panel-tabset}
-
-## Communism
 ```{r}
-summarize_gdp_by_category(is_communist)
+summarize_gdp_by_category(gov_type)
 ```
-
-## Democracy
-```{r}
-summarize_gdp_by_category(is_democracy)
-```
-
-## Monarchy
-```{r}
-summarize_gdp_by_category(is_monarchy)
-```
-:::
 
 ## Statistical Test for Model Between Regime Category and GDP
 
@@ -650,41 +602,20 @@ plot_pop_by_category(regime_category)
 ## Ridgeline Plots for the Relationship Between Communism, Democracy, and Monarchy Status and Population
 
 ```{r}
-#| layout-ncol: 3
-par(mfrow = c(1, 3))
-plot_pop_by_category(is_communist)
-plot_pop_by_category(is_democracy)
-plot_pop_by_category(is_monarchy)
-par(mfrow = c(1, 1))
+plot_pop_by_category(gov_type)
 ```
 
 ## Summary Statistics for the Relationship Between Regime Category and Population
 
 ```{r}
-
 summarize_pop_by_category(regime_category)
-
 ```
 
 ## Summary Statistics for the Relationship Between Communism, Democracy, and Monarchy Status and Population
 
-::: {.panel-tabset}
-
-## Communism
 ```{r}
-summarize_pop_by_category(is_communist)
+summarize_pop_by_category(gov_type)
 ```
-
-## Democracy
-```{r}
-summarize_pop_by_category(is_democracy)
-```
-
-## Monarchy
-```{r}
-summarize_pop_by_category(is_monarchy)
-```
-:::
 
 ## Statistical Test for Model Between Regime Category and Population
 
